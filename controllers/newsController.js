@@ -10,7 +10,7 @@ const APIKey = "d0b69496c18e463f888a273cb521ea9f";
 
 exports.saveNewsByCountry = catchAsync(async (req, res, next) => {
   const newsOrg = await axios.get(
-    `https://newsapi.org/v2/top-headlines?country=${req.params.country}&language=en&apiKey=${APIKey}&pageSize=100`
+    `https://newsapi.org/v2/top-headlines?country=${req.params.country}&apiKey=${APIKey}&pageSize=100`
   );
   console.log(newsOrg.data);
   const promises = newsOrg.data.articles.map((article) => {

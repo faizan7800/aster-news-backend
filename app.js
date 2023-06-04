@@ -6,6 +6,7 @@ const rateLimit = require('express-rate-limit')
 const helmet = require('helmet')
 const mongoSanitize = require('express-mongo-sanitize')
 const xss = require('xss-clean')
+const News = require("./models/newsModel")
 
 const cookieParser = require('cookie-parser')
 const globalErrorHandler = require('./controllers/errorController')
@@ -56,9 +57,25 @@ app.use(xss()) //clean  malicious html code from user input
 //! MiddleWare for specfic routes
 
 //TODO: Use Router middleware
+app.get("/api/v1/allnews", async(req,res)=>{
+  try{
+      const newsArticles = await News.find()
+      let newsToBeSpliced = newsArticles.length - (newsArticles.length/3)*2;
+      const finalArticles = newsArticles.splice(0,newsToBeSpliced);
+      return res.status(200).json({
+        success:true,
+        count: finalArticles.length,
+        data:finalArticles
+      }) 
+  }catch(error){
+    console.log(error)
+    res.status(500).json({error:"internal server error"})
+  }
+})
 app.use('/api/v1/users', userRouter)
 app.use('/api/v1/scrap', scrapRouter)
 app.use('/api/v1/news', newsRouter)
+
 //! Settings for Deployment
 app.use('/image', express.static(path.join(__dirname, 'img')))
 

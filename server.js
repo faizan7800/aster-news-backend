@@ -12,8 +12,7 @@ dotenv.config({
   path: "./config.env",
 }); // read all the variables from config.env file and put them in nodejs environment
 const app = require("./app");
-const DB =
-  "mongodb+srv://faizan:ahsanfaizan@cluster0.j4fztss.mongodb.net/?retryWrites=true&w=majority";
+const DB = "mongodb://localhost/newsAppDB";
 // ! Connecting our App with hosted datatbase on Atlas Cloud
 
 mongoose

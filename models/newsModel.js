@@ -26,12 +26,7 @@ const newsSchema = new mongoose.Schema({
       ref: "Comment",
     },
   ],
-  newsCount: [
-    {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
-    },
-  ],
+  clickCount: { type: Number, default: 0 },
 });
 const News = mongoose.model("News", newsSchema);
 module.exports = News;

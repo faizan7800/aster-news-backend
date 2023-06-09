@@ -6,13 +6,12 @@ const Comment = require("../models/commentsModel");
 const catchAsync = require("../utils/catchAysnc");
 const User = require("../models/userModel");
 
-const APIKey = "d0b69496c18e463f888a273cb521ea9f";
+const APIKey = "6a3954c95af946d88abe6995274ef667";
 
 exports.saveNewsByCountry = catchAsync(async (req, res, next) => {
   const newsOrg = await axios.get(
     `https://newsapi.org/v2/top-headlines?country=${req.params.country}&apiKey=${APIKey}&pageSize=100`
   );
-  console.log(newsOrg.data);
   const promises = newsOrg.data.articles.map((article) => {
     const news = new News({
       author: article.author,
@@ -77,6 +76,7 @@ exports.saveIntNewsByCat = catchAsync(async (req, res, next) => {
 exports.saveSammaNewsByCat = catchAsync(async (req, res, next) => {
   const browser = await puppeteer.launch();
   const page = await browser.newPage();
+  await page.setDefaultNavigationTimeout(0);
   await page.goto(`https://www.samaa.tv/${req.params.cat}`);
 
   await page.waitForSelector("article");
@@ -134,6 +134,93 @@ exports.saveSammaNewsByCat = catchAsync(async (req, res, next) => {
     );
 });
 
+exports.saveExpressNewsByCat = catchAsync(async (req, res, next) => {
+  const browser = await puppeteer.launch();
+  const page = await browser.newPage();
+  await page.setDefaultNavigationTimeout(0);
+  await page.goto(`https://express.pk/${req.params.cat}`);
+
+  await page.waitForSelector(".columnarstorey");
+
+  const html = await page.content();
+
+  const $ = cheerio.load(html);
+
+  const htmlData = $(".columnarstorey")
+    .map((i, el) => $(el).html())
+    .get();
+  const wrappedHtmlString = `<div>${htmlData}</div>`;
+  const $1 = cheerio.load(wrappedHtmlString);
+  $1("h3").remove();
+
+  const elements = $1("div.cstoreyitem");
+  const result = elements.map((index, element) => $1.html(element)).get();
+  let news = [];
+  result.forEach((el) => {
+    const $ = cheerio.load(el);
+    const html = $(".cstoreyitem").html();
+    const $1 = cheerio.load(html);
+    const urlToImage = $1("img").attr("src");
+    const title = $1("a:nth-child(2)").html();
+    const url = $1("a").attr("href");
+    news.push({
+      urlToImage,
+      author: "Express News",
+      category: `local${req.params.cat}`,
+      url,
+      title,
+    });
+  });
+  await browser.close();
+  const promises = news.map((article) => {
+    const news = new News({
+      author: article.author,
+      category: `local${req.params.cat}`,
+      country: "",
+      title: article.title,
+      description: "",
+      url: article.url,
+      urlToImage: article.urlToImage,
+    });
+    return news.save();
+  });
+  console.log(promises);
+  Promise.all(promises)
+    .then(() =>
+      res.status(200).json({
+        status: "success",
+        message: "News saved successfully",
+      })
+    )
+    .catch((error) =>
+      res.status(404).json({
+        status: "error",
+        message: error,
+      })
+    );
+});
+
+exports.saveExpressNewsDescOfOneNews = catchAsync(async (req, res, next) => {
+  const { id } = req.params;
+  const news = await News.find().where({ _id: id });
+  if (!news) return res.status(404).json({ error: "News not found" });
+  const browser = await puppeteer.launch();
+  const page = await browser.newPage();
+  await page.goto(`${news[0].url}`);
+  await page.waitForSelector("div");
+  const html = await page.content();
+  const $ = cheerio.load(html);
+  const htmlData = $("div.span-16.story-content")
+    .map((i, el) => $(el).html())
+    .get();
+  const $1 = cheerio.load(htmlData[0]);
+  const desc = $1("p").text();
+  await News.findByIdAndUpdate(id, { description: desc }, { new: true });
+  res.status(200).json({
+    data: "News description update with id:" + id,
+  });
+});
+
 exports.saveSamaNewsDescOfOneNews = catchAsync(async (req, res, next) => {
   const { id } = req.params;
   const news = await News.find().where({ _id: id });
@@ -158,6 +245,7 @@ exports.saveSamaNewsDescOfOneNews = catchAsync(async (req, res, next) => {
 exports.saveGeoNewsByCat = catchAsync(async (req, res, next) => {
   const browser = await puppeteer.launch();
   const page = await browser.newPage();
+  await page.setDefaultNavigationTimeout(0);
   await page.goto(`https://www.geo.tv/category/${req.params.cat}`);
 
   await page.waitForSelector("ul");

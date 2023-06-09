@@ -20,6 +20,8 @@ const {
   removeNewsFromBookmark,
   getAllBookmarkedNews,
   newsCounter,
+  saveExpressNewsByCat,
+  saveExpressNewsDescOfOneNews,
 } = require("../controllers/newsController");
 const { protect } = require("./../controllers/authController");
 
@@ -27,6 +29,9 @@ const Router = express.Router();
 
 // this --->
 Router.route("/local/samma/:cat").post(protect, saveSammaNewsByCat);
+
+// this --->
+Router.route("/local/express/:cat").post(protect, saveExpressNewsByCat);
 
 //this ---->
 Router.route("/:country").post(protect, saveNewsByCountry);
@@ -46,6 +51,7 @@ Router.route("/local/:cat/:newsId").get(protect, getLocalNewsById);
 Router.route("/local/:cat").get(protect, getLocalNewsByCat);
 Router.route("/local/geo/:cat/:id").post(protect, saveGeoNewsDescOfOneNews);
 Router.route("/local/samma/:cat/:id").post(protect, saveSamaNewsDescOfOneNews);
+Router.route("/local/express/:cat/:id").post(protect, saveExpressNewsDescOfOneNews);
 Router.route("/int/:cat/:newsId").get(protect, getIntNewsById);
 Router.route("/int/:cat").get(protect, getIntNewsByCat);
 Router.route("/like/:newsId").post(protect, likeNews);
